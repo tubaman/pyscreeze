@@ -211,6 +211,17 @@ def _load_cv2(img, grayscale=None):
     return img_cv
 
 
+def _is_retina_display_osx():
+    return subprocess.call("system_profiler SPDisplaysDataType | grep -i retina", shell=True, stdout=subprocess.DEVNULL) == 0
+
+
+# set the screenshot() function based on the platform running this module
+if sys.platform == 'darwin':
+    is_retina_display = _is_retina_display_osx
+else:
+    is_retina_display = lambda: False
+
+
 def _locateAll_opencv(needleImage, haystackImage, grayscale=None, limit=10000, region=None, step=1, confidence=0.999):
     """
     TODO - rewrite this
@@ -261,6 +272,8 @@ def _locateAll_opencv(needleImage, haystackImage, grayscale=None, limit=10000, r
     matchx = matches[1] * step + region[0]  # vectorized
     matchy = matches[0] * step + region[1]
     for x, y in zip(matchx, matchy):
+        if is_retina_display():
+            x, y, needleWidth, needleHeight = (v/2 for v in (x, y, needleWidth, needleHeight))
         yield Box(x, y, needleWidth, needleHeight)
 
 
